@@ -1,39 +1,36 @@
-import numpy as np
+from numpy import clip
 
 
 class Dithering:
-    def __init__(self, image: []):
+    def __init__(self, image: [], colors_qty: int):
         self.image = image
         self.size = len(image)
+        self.colors_qty = colors_qty
         self.colors_per_channel = 255
+        self.factor = self.colors_per_channel/(self.colors_qty - 1)
 
     def dither(self) -> []:
-        for y in range(0, self.size):
+        for y in range(0, self.size - 1):
             print(y)
-            for x in range(0, self.size):
-                if x == 0 or x == self.size - 1 or y == self.size - 1:
-                    continue
+            for x in range(1, self.size - 1):
                 self._quantize_pixel(x, y)
-                # return self.image  # just for testing
         return self.image
 
     def _quantize_pixel(self, x: int, y: int) -> None:
-        new_pixel = self._find_closest_colors(self.image[x][y], 4)
-        quant_error = self.image[x][y] - new_pixel
+        old_pixel = self.image[x][y]
+        new_pixel = self._find_closest_colors(old_pixel)
+        quant_error = old_pixel - new_pixel
         self.image[x][y] = new_pixel
-        # print(quant_error)
-        # print(quant_error * 7 / 16)
-        self.image[x + 1][y] += [np.uint8(int(ch)) for ch in quant_error * 7 / 16]
-        # print(self.image[x + 1][y])
-        # print(int(-13.234375))
-        # print(np.uint8(int(-13.666)))
-        self.image[x - 1][y + 1] += [np.uint8(ch) for ch in quant_error * 3 / 16]
-        self.image[x][y + 1] += [np.uint8(ch) for ch in quant_error * 5 / 16]
-        self.image[x + 1][y + 1] += [np.uint8(ch) for ch in quant_error * 1 / 16]
 
-    def _find_closest_colors(self, pixel: [], colors_qty: int) -> []:
-        factor = self.colors_per_channel/colors_qty
-        # print(pixel)
-        pixel = [round(color/factor)*factor for color in pixel]
-        # print(pixel)
-        return pixel
+        self._propagate_error(x + 1, y, quant_error * 0.4375)
+        self._propagate_error(x - 1, y + 1, quant_error * 0.1875)
+        self._propagate_error(x, y + 1, quant_error * 0.3125)
+        self._propagate_error(x + 1, y + 1, quant_error * 0.0625)
+
+    def _find_closest_colors(self, pixel: []) -> []:
+        return [round(color/self.factor)*self.factor for color in pixel]
+
+    def _propagate_error(self, x: int, y: int, quant_error: []) -> None:
+        clip(self.image[x][y] + quant_error,
+             0, self.colors_per_channel,
+             out=self.image[x][y])

@@ -5,6 +5,3 @@ class ImageLoader:
     def __init__(self, image_name: str):
         self.img = mp_img.imread(image_name)
         self.img.setflags(write=1)
-
-    def get_image(self) -> []:
-        return self.img
