@@ -4,15 +4,16 @@ from numpy import clip
 class Dithering:
     def __init__(self, image: [], colors_qty: int):
         self.image = image
-        self.size = len(image)
+        self.width = len(image[0])
+        self.height = len(image)
         self.colors_qty = colors_qty
         self.colors_per_channel = 255
         self.factor = self.colors_per_channel/(self.colors_qty - 1)
 
     def dither(self) -> []:
-        for y in range(0, self.size - 1):
+        for y in range(0, self.width - 1):
             print(y)
-            for x in range(1, self.size - 1):
+            for x in range(1, self.height - 1):
                 self._quantize_pixel(x, y)
         return self.image
 
